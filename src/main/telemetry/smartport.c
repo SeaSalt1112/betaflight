@@ -601,7 +601,7 @@ void processSmartPortTelemetry(smartPortPayload_t *payload, volatile bool *clear
 
         switch (id) {
             case FSSP_DATAID_VFAS       :
-                vfasVoltage = getBatteryVoltage();
+                vfasVoltage = getBatteryVoltageLatest();
                 if (telemetryConfig()->report_cell_voltage) {
                     cellCount = getBatteryCellCount();
                     vfasVoltage = cellCount ? getBatteryVoltage() / cellCount : 0;

@@ -534,7 +534,7 @@ static void osdShowStats(uint16_t endBatteryVoltage)
     }
 
     if (osdStatGetState(OSD_STAT_BATTERY)) {
-        tfp_sprintf(buff, "%d.%02d%c", getBatteryVoltage() / 100, getBatteryVoltage() % 100, SYM_VOLT);
+        tfp_sprintf(buff, "%d.%02d%c", getBatteryVoltageLatest() / 100, getBatteryVoltageLatest() % 100, SYM_VOLT);
         osdDisplayStatisticLabel(top++, "BATTERY", buff);
     }
 
