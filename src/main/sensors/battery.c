@@ -65,6 +65,7 @@ uint16_t batteryWarningVoltage;
 uint16_t batteryCriticalVoltage;
 static lowVoltageCutoff_t lowVoltageCutoff;
 //
+
 static currentMeter_t currentMeter;
 static voltageMeter_t voltageMeter;
 
@@ -116,6 +117,8 @@ PG_RESET_TEMPLATE(batteryConfig_t, batteryConfig,
 
     .vbatLpfPeriod = 30,
     .ibatLpfPeriod = 10,
+    .batteryDurationForWarning = 0,
+    .batteryDurationForCrit = 0,
 );
 
 void batteryUpdateVoltage(timeUs_t currentTimeUs)
@@ -228,24 +231,35 @@ void batteryUpdatePresence(void)
 static void batteryUpdateVoltageState(void)
 {
     // alerts are currently used by beeper, osd and other subsystems
+    static uint32_t lastVoltageOkMillis;
     switch (voltageState) {
         case BATTERY_OK:
             if (voltageMeter.filtered <= (batteryWarningVoltage - batteryConfig()->vbathysteresis)) {
-                voltageState = BATTERY_WARNING;
+                if (cmp32(millis(), lastVoltageOkMillis) >= batteryConfig()->batteryDurationForWarning * 100) {
+                    voltageState = BATTERY_WARNING;
+                }
+            } else {
+                lastVoltageOkMillis = millis();
             }
             break;
 
         case BATTERY_WARNING:
             if (voltageMeter.filtered <= (batteryCriticalVoltage - batteryConfig()->vbathysteresis)) {
-                voltageState = BATTERY_CRITICAL;
-            } else if (voltageMeter.filtered > batteryWarningVoltage) {
-                voltageState = BATTERY_OK;
+                if (cmp32(millis(), lastVoltageOkMillis) >= batteryConfig()->batteryDurationForCrit * 100) {
+                    voltageState = BATTERY_CRITICAL;
+                }
+            } else {
+                if (voltageMeter.filtered > batteryWarningVoltage) {
+                    voltageState = BATTERY_OK;
+                }
+                lastVoltageOkMillis = millis();
             }
             break;
 
         case BATTERY_CRITICAL:
             if (voltageMeter.filtered > batteryCriticalVoltage) {
                 voltageState = BATTERY_WARNING;
+                lastVoltageOkMillis = millis();
             }
             break;
 
